@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>LINE 聊天分析</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang TC", "Noto Sans TC", sans-serif;
+      background: #f7f7f7;
+      padding: 40px;
+    }
+
+    h1, h2 { margin-bottom: 16px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; margin-top: 32px; }
+
+    .container {
+      max-width: 640px;
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    label { display: block; margin-top: 20px; margin-bottom: 8px; font-size: 16px; }
+
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      font-size: 18px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 28px;
+      width: 100%;
+      font-size: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-weight: 600;
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #status { margin-top: 24px; font-size: 16px; white-space: pre-wrap; }
+    #profileList li { margin-bottom: 8px; }
+    #profileList a { text-decoration: none; color: #2563eb; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>LINE 聊天分析</h1>
+
+  <label>角色名稱（可空白，會從檔名判斷）</label>
+  <input id="nameInput" type="text" placeholder="例如：小明" />
+
+  <label>Profile ID（文件名稱，用於 Firestore）</label>
+  <input id="profileIdInput" type="text" placeholder="例如：小1" />
+
+  <label>上傳 LINE 對話 txt</label>
+  <input id="fileInput" type="file" accept=".txt" />
+  <button id="submitBtn" onclick="upload()">上傳並分析</button>
+
+  <div id="status"></div>
+
+  <h2>已有聊天室</h2>
+  <ul id="profileList"></ul>
+</div>
+
+<script>
+const profileList = document.getElementById('profileList');
+
+async function loadProfiles() {
+  try {
+    const res = await fetch('/profiles');
+    const data = await res.json();
+    if (!data.success) return;
+    profileList.innerHTML = '';
+    data.profiles.forEach(p => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = `/chat.html?profileId=${encodeURIComponent(p.profileId)}&name=${encodeURIComponent(p.name)}`;
+      a.textContent = `${p.name} (${p.profileId})`;
+      li.appendChild(a);
+      profileList.appendChild(li);
+    });
+  } catch(err) {
+    console.error(err);
+  }
+}
+loadProfiles();
+
+async function upload() {
+  const nameInput = document.getElementById('nameInput');
+  const profileIdInput = document.getElementById('profileIdInput');
+  const fileInput = document.getElementById('fileInput');
+  const status = document.getElementById('status');
+  const btn = document.getElementById('submitBtn');
+
+  const file = fileInput.files[0];
+  if (!file) { alert('請選擇檔案'); return; }
+
+  const profileId = profileIdInput.value.trim();
+  const targetName = nameInput.value.trim();
+  if (!profileId || !targetName) { alert('請填寫角色名稱與 Profile ID'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '分析中…';
+  status.innerHTML = `<div><span class="spinner"></span>正在上傳檔案…</div>`;
+
+  const formData = new FormData();
+  formData.append('deceasedName', targetName);
+  formData.append('profileId', profileId);
+  formData.append('chatFile', file);
+
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: formData });
+    status.innerHTML = `<div><span class="spinner"></span>Gemini 分析中，請稍候…</div>`;
+    const data = await res.json();
+    if (data.success) {
+      status.textContent = '✅ 分析完成！即將進入聊天頁面…';
+      setTimeout(() => {
+        window.location.href = `/chat.html?profileId=${profileId}&name=${targetName}`;
+      }, 800);
+    } else {
+      status.textContent = '❌ 分析失敗：' + (data.error || '未知錯誤');
+    }
+  } catch(err) {
+    status.textContent = '❌ 分析失敗，請查看 console';
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '上傳並分析';
+    loadProfiles(); // 重新刷新列表
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>LINE 風格聊天室</title>
+  <style>
+    /* 基礎背景設定 */
+    body {
+      font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: #95a8c5; /* LINE 經典藍背景 */
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 450px;
+      height: 90vh;
+      background: #7494C0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    /* 標題 */
+    h2 {
+      background: #ffffff;
+      margin: 0;
+      padding: 15px;
+      font-size: 18px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    /* 訊息區域：確保 Flexbox 佈局 */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column; 
+      gap: 5px; /* 訊息間距調整，讓有名字的訊息更緊湊 */
+    }
+
+    /* 訊息容器基礎設定 */
+    .message {
+      max-width: 70%;
+      margin-bottom: 15px;
+      padding: 0; /* 讓內容 P 元素控制 padding */
+      line-height: 1.5;
+      word-break: break-word; /* 強制斷行 */
+    }
+
+    /* 名字顯示樣式 (只會出現在 bot 訊息上方的 span) */
+    .sender-name {
+      display: block; 
+      font-size: 13px;
+      color: #333; 
+      font-weight: bold;
+      margin-bottom: 2px; /* 名字和氣泡內容的間距 */
+      margin-left: 5px; /* 與左側對齊 */
+    }
+
+    /* 訊息內容氣泡 (真正包含背景色和圓角的部分) */
+    .message-content {
+      display: block; 
+      padding: 10px 16px;
+      font-size: 15px;
+      max-width: 100%;
+    }
+
+    /* --- 使用者訊息：靠右、綠色 --- */
+    .user {
+      align-self: flex-end;    
+      margin-left: auto;        /* 強制推到最右邊 */
+      margin-right: 0;
+    }
+    .user .message-content {
+      background-color: #85E05D; 
+      color: #000;
+      /* 圓角：左上、右上、左下、右下 (右下角較小) */
+      border-radius: 20px 20px 4px 20px; 
+    }
+
+    /* --- 對方訊息：靠左、白色 --- */
+    .bot {
+      align-self: flex-start;  
+      margin-right: auto;       /* 強制推到最左邊 */
+      margin-left: 0;
+    }
+    .bot .message-content {
+      background-color: #FFFFFF;
+      color: #000;
+      /* 圓角：左上、右上、左下、右下 (左下角較小) */
+      border-radius: 20px 20px 20px 4px;
+    }
+
+    /* 下方輸入區域 */
+    .input-area {
+      background: #ffffff;
+      padding: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 25px; 
+      border: 1px solid #eee;
+      background: #f5f5f5;
+      outline: none;
+      font-size: 16px;
+    }
+
+    button {
+      background: #32d26a;
+      color: white;
+      border: none;
+      padding: 0 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:disabled {
+      background: #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <h2>聊天頁面</h2>
+  <div class="messages" id="messages">
+    </div>
+
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="輸入訊息..." />
+    <button id="micBtn" title="語音輸入">🎤</button>
+    <button id="sendBtn">送出</button>
+  </div>
+</div>
+
+<script src="chat.js"></script>
+</body>
+</html>
